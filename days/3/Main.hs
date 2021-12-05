@@ -2,23 +2,46 @@ import Data.List
 import System.Environment
 import Control.Applicative
 
-toBools :: String -> [Bool]
-toBools = map (=='1')
-
-acc :: [[Bool]] -> [Int]
-acc bs = foldr foldop zeros bs where
-    zeros = map (const 0) (head bs)
-    foldop = zipWith (\b x -> if b then x + 1 else x - 1)
-
-gamma :: [[Bool]] -> Int
-gamma = toInt . map (>0) . acc
-
-epsilon :: [[Bool]] -> Int
-epsilon = toInt . map (<0) . acc
+------------ Helpers ------------------
 
 enumerate :: [a] -> [(Int, a)]
 enumerate = zip [0..]
 
+-- Create an Integer from the boolean list, treating the list as bits.
+-- toInt [True, True, False, False] => 10
+toInt :: [Bool] -> Int
+toInt bs = let
+    pairs = enumerate (map conv . reverse $ bs)
+    in sum . map (\(n, p) -> p * (2 ^ n)) $ pairs
+    where conv True = 1
+          conv False = 0
+
+-- Re-stringify a 2d boolean list
+toStr :: [[Bool]] -> String
+toStr = intercalate "\n" . map (map (\b -> if b then '1' else '0'))
+
+-- Parse a bitstring into an array of booleans (1=True, 0=False)
+toBools :: String -> [Bool]
+toBools = map (=='1')
+
+------------ Part 1 ---------------
+
+bitdiff :: [[Bool]] -> [Int]
+bitdiff bs = foldr foldop zeros bs where
+    zeros = map (const 0) (head bs)
+    foldop = zipWith (\b x -> if b then x + 1 else x - 1)
+
+gamma :: [[Bool]] -> Int
+gamma = toInt . map (>0) . bitdiff
+
+epsilon :: [[Bool]] -> Int
+epsilon = toInt . map (<0) . bitdiff
+
+powerConsumption :: [[Bool]] -> Int
+powerConsumption = liftA2 (*) gamma epsilon
+
+
+---------- Part 2 -------------
 
 mcb :: Int -> [[Bool]] -> Int
 mcb i = foldr (foldop . (!!i)) 0
@@ -48,19 +71,6 @@ ogr = filterStep filterox
 
 csr :: [[Bool]] -> Int
 csr = filterStep filterco2
-
-toInt :: [Bool] -> Int
-toInt bs = let
-    pairs = enumerate (map conv . reverse $ bs)
-    in sum . map (\(n, p) -> p * (2 ^ n)) $ pairs
-    where conv True = 1
-          conv False = 0
-
-toStr :: [[Bool]] -> String
-toStr = intercalate "\n" . map (map (\b -> if b then '1' else '0'))
-
-powerConsumption :: [[Bool]] -> Int
-powerConsumption = liftA2 (*) gamma epsilon
 
 main :: IO ()
 main = do
