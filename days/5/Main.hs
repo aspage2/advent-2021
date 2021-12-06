@@ -51,6 +51,10 @@ orderBy f (x, y) = if f x <= f y then (x, y) else (y, x)
 order :: Ord a => (a, a) -> (a, a)
 order = orderBy id
 
+
+-- This is overly generic for the problem statement. It applies to
+-- **every** possible line, while the problem space is only for
+-- lines that are horizontal, vertical or slope=1.
 segmentPoints :: Line -> [(Coord, Coord)]
 segmentPoints l@(Line x1 y1 x2 y2) = if vertical l
     then let (lo, hi) = order (y1, y2) in map (x1,) [lo..hi]
