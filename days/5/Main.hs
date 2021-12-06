@@ -10,6 +10,15 @@ import Control.Applicative
 import Control.Monad
 import Common.Parse
 
+{- Day 5: Line Segments
+
+The problem is counting the number of intersections of a set of line segments.
+The line segments are discrete; they have finitely many cells which make them up.
+To count the number of intersections, we can expand each line segment into its housing
+cells, then aggregate each cell coordinate and count the number of cells with 2 or more
+instances.
+-}
+
 type Coord = Ratio Int
 data Line = Line { x1 :: Coord, y1 :: Coord, x2 :: Coord, y2 :: Coord}
 

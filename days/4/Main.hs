@@ -5,6 +5,16 @@ import Control.Monad
 import Control.Monad.Trans.State
 import Common.Parse
 
+{- Day 4: Bingo
+
+Using Maybe to account for boards which can't be solved with the given call sequence.
+
+Haskell-y things
+ * Using Maybe's monadic properties to add short-circuiting to strings of operations
+   e.g. if the first call returns "Nothing", skip the remaining calls and return Nothing.
+ * Using the "Ord" typeclass to roll min/max functions which work with Maybe types
+-}
+
 type Board = [Int]
 type CallSequence = [Int]
 
@@ -40,7 +50,7 @@ winningCall :: CallSequence -> Board -> Maybe Int
 winningCall calls bs = let
     spans = liftM2 (\x y -> x y bs) [row, column] [0..4]
     spanScores = map (latestCall calls) spans
-    in min (catMaybe spanScores)
+    in minMaybe spanScores
 
 -- The score of a board
 boardScore :: Int -> CallSequence -> Board -> Int
@@ -48,6 +58,9 @@ boardScore call calls b = let
     cn = calls !! call
     in sum (filter (\c -> fromJust (elemIndex c calls) > call) b) * cn
 
+-- Maybe is a Monadic type, where maybe's bind (>>=) operation
+-- short-circuits if the left value is Nothing. This means we can
+-- safely perform a sequence of calls like so using `do` notation.
 boardInfo :: CallSequence -> Board -> Maybe (Int, Int)
 boardInfo cs b = do
     wc <- winningCall cs b

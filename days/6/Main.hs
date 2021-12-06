@@ -4,7 +4,7 @@ import Data.Maybe
 import qualified Data.Map as Map
 
 
-{- Lanternfish
+{- Day 6: Lanternfish
 
 The timer-state of each fish is simple and independant of the other lanternfish, so
 we can track the population in "buckets" instead of by individual fish. Namely, the
