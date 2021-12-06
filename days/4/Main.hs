@@ -40,7 +40,7 @@ winningCall :: CallSequence -> Board -> Maybe Int
 winningCall calls bs = let
     spans = liftM2 (\x y -> x y bs) [row, column] [0..4]
     spanScores = map (latestCall calls) spans
-    in minMaybe spanScores
+    in min (catMaybe spanScores)
 
 -- The score of a board
 boardScore :: Int -> CallSequence -> Board -> Int
