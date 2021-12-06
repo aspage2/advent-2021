@@ -65,8 +65,8 @@ segmentPoints l@(Line x1 y1 x2 y2) = if vertical l
 countVents :: [Line] -> Map.Map (Coord, Coord) Int
 countVents ls = let
     segments = concatMap segmentPoints ls
-    in foldr step Map.empty segments
-    where step pt = Map.insertWith (+) pt 1
+    in foldl' step Map.empty segments
+    where step acc pt = Map.insertWith (+) pt 1 acc
 
 
 main :: IO ()
