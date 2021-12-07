@@ -2,6 +2,7 @@ import System.Environment
 
 import Data.Maybe
 import qualified Data.Map as Map
+import Common.Helper
 
 
 {- Day 6: Lanternfish
@@ -24,10 +25,6 @@ and the newborn lanternfish whose timer starts at 8.
 
 type ColonyState = Map.Map Int Int
 
-splitOn :: Eq a => a -> [a] -> [[a]]
-splitOn v s = case dropWhile (==v) s of
-                [] -> []
-                s' -> w : splitOn v s'' where (w, s'') = break (==v) s'
 
 newColonyState :: [Int] -> ColonyState
 newColonyState = let
