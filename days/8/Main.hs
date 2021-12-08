@@ -7,6 +7,41 @@ import Control.Monad
 import Common.Parse
 
 
+{- Day 8 - 7-segments
+
+Given all 10 patterns from a randomized 7-segment, you can form a
+mapping from lit segment -> correct segment procedurally. For reference,
+the "real" labels for each segment are as follows:
+
+ aaa
+b   c
+b   c
+ ddd
+e   f
+e   f
+ ggg
+
+ * Solution *
+
+Note that for a non-broken seven-segment display, segments b, e and
+f are activated a unique number of times (b=6, e=4, f=9). Solve b, e, and
+f by finding the letters in the patterns which are used those numbers of
+time. With b, e, and f solved, you can solve the remaining segments as
+follows:
+
+Choose the 2-long pattern, which must be "1". The letter for C is the letter
+in the pattern which wasn't assigned to F.
+
+Choose the 3-long pattern, which must be "7". The letter for A is the letter
+in the pattern which wasn't assigned to either C or F.
+
+Choose the 4-long pattern, which must be "4". The letter for D is the letter
+in the pattern which wasn't assigned to B, C or F.
+
+Now that we've solved for A, B, C, D, E and F, we can deduce G by picking
+the last letter in the patterns which wasn't assigned.
+-}
+
 data Case = Case { patterns :: [String] , output :: [String] } deriving (Show)
 
 invLookup :: (Eq a, Eq k) => a -> M.Map k a -> k
