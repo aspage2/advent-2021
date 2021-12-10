@@ -10,7 +10,16 @@ import Control.Monad
 
 {- Day 9 - Basins
 
-Gee wow, this is hot garbage
+Haskell has an array type for fast N-dimension lookups, so
+we can represent the floormap as a 2D array.
+
+To find the low points, simply filter on the cells whose values
+are strictly less than those of their valid neighbors.
+
+For mapping the basins, since each basin has one low point, we
+can do DFS (?) from each low point to build the sets of cells which
+make up each basin. Then, we just take the 3 largest basins created
+and take the product of their lengths.
 -}
 
 type Ind = (Int, Int)
@@ -48,34 +57,14 @@ getBasin (r, c) g = _gb (r, c) S.empty
                 ns = filter (\c -> S.notMember c s'') (neighbors (w, h) cell')
                 in foldr _gb s'' ns
 
-type GridState = [S.Set Ind]
-
-visited :: Ind -> GridState -> Bool
-visited i = any (S.member i)
-
-getBasinS :: Ind -> Grid -> State GridState ()
-getBasinS i g = let inds = getBasin i g 
-    in
-        state $ \basins -> ((), inds : basins)
-
-getAllBasin :: Ind -> Grid -> State GridState ()
-getAllBasin st g = _gab st
-    where
-        (_, (h, w)) = A.bounds g
-        idxs = [(r, c) | r <- [0..h], c <- [0..w]]
-        cond vs ind = not (visited ind vs) && g A.! ind /= 9
-        _gab i = if g A.! i == 9 then return () else do
-                      getBasinS i g
-                      vs <- get
-                      case take 1 $ filter (cond vs) idxs of
-                            [] -> return ()
-                            [i'] -> _gab i'
-                            _ -> undefined
+getAllBasin :: Grid -> [S.Set Ind]
+getAllBasin g = let
+    lp = localMinima g
+    in map (`getBasin` g) lp
 
 main = do
     g <- parseGrid <$> (getArgs >>= readFile . head)
     print $ sum . map ((+1) . (g A.!)) . localMinima $ g
     print $ getBasin (0, 3) g
-    let basins = execState (getAllBasin (0, 0) g) []
-
+    let basins = getAllBasin g
     print . negate . product . take 3 . sort . map (negate . length) $ basins
