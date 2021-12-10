@@ -33,12 +33,15 @@ if we exit the loop with a nonempty stack, that means the string is
   missing closing brackets in the order of the stack.
 -}
 
+conv :: Char -> Char
+conv '[' = ']'
+conv '(' = ')'
+conv '{' = '}'
+conv '<' = '>'
+conv _ = undefined 
+
 match :: Char -> Char -> Bool
-match '[' ']' = True
-match '(' ')' = True
-match '{' '}' = True
-match '<' '>' = True
-match _ _ = False
+match co cc = cc == conv co
 
 firstIllegalChar :: String -> Maybe Char
 firstIllegalChar s = _check s []
@@ -57,11 +60,6 @@ complete = map conv . foldl _complete []
               c' | elem c' ['[', '(', '{', '<'] -> c' : bs
                  | elem c' [']', ')', '}', '>'] -> drop 1 bs
                  | otherwise -> undefined 
-        conv '[' = ']'
-        conv '(' = ')'
-        conv '{' = '}'
-        conv '<' = '>'
-        conv _ = undefined 
 
 score :: Char -> Int
 score ')' = 3
