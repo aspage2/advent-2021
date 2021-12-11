@@ -23,7 +23,8 @@ many of its neighbors flashed.
 
 For part 2, we are guaranteed that any starting grid will sync up in a
 finite amount of time, as synced octopi never de-sync and de-sync'd
-octopi will eventually sync.
+octopi will eventually sync. Thus, we can just continue simulating the
+grid until we find a step where all octopi flash.
 
 -}
 
