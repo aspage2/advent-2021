@@ -48,8 +48,9 @@ c2i '9' = 9
 c2i _ = undefined
 
 neighbors :: (Int, Int) -> [(Int, Int)]
-neighbors (r, c) = filter cond [(r-1, c-1), (r-1, c), (r-1, c + 1), (r, c-1), (r,c+1), (r+1, c-1), (r+1, c), (r+1, c+1)]
-    where cond (r', c') = 0 <= r' && r' < 10 && 0 <= c' && c' < 10
+neighbors (r, c) = let r' = r - 1
+                       c' = c - 1
+                   in [(i, j) | i <- [r'..(r' + 2)], j <- [c'..(c' + 2)], i /= j]
 
 parseGrid :: String -> Grid
 parseGrid s =
