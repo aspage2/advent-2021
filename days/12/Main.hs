@@ -57,6 +57,23 @@ neighbors v (vs, es) = let
     row = map (\c -> (c, es A.! (vnum,c))) [0..d]
     in map (\i -> invLookup (fst i) vs) $ filter snd row
 
+walk :: a -> (a -> String -> Bool) -> (a -> String -> a) -> Graph -> [[String]]
+walk init valid vsUpdate (vs, es) = _w "start" init 
+    where
+        _w "end" _ = [["end"]]
+        _w node st = let
+            st' = vsUpdate st node
+            ns = filter (valid st') (neighbors node (vs, es))
+            in concatMap (\n -> map (node:) $ _w n st') ns
+
+
+part1Walk' :: Graph -> [[String]]
+part1Walk' = walk S.empty (\vs n -> not (isSmall n && S.member n vs)) (flip S.insert) 
+
+part2Walk' :: Graph -> [[String]]
+part2Walk' = walk (S.empty, False)
+    (\(vs, st) n -> (n /= "start") && not (isSmall n) || not st || not (S.member n vs))
+    (\(vs, st) n -> (S.insert n vs, st || S.member n vs && isSmall n))
 
 part1Walk :: Graph -> [[String]]
 part1Walk (vs, es) = _w "start" S.empty
@@ -87,10 +104,8 @@ test p = let step v m' = M.insertWith (+) v 1 m'
 
 
 main = do
-    print "Hello, world"
     contents <- getArgs >>= readFile . head
 
     let g = parseGraph contents
 
-    print $ length $ part1Walk g
-    print $ length $ part2Walk g
+    print $ length $part2Walk' g
