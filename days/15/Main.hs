@@ -1,13 +1,28 @@
 import Data.Maybe
-import Data.List
-import Debug.Trace
 import System.Environment
 import qualified Data.Map as M
-import qualified Data.PQueue.Min as PQ
+import qualified Data.HashSet as HS
+import Data.Graph.AStar
 
 type Vertex = (Int, Int)
-type Edges = M.Map (Vertex, Vertex) Int
+type Costs = M.Map Vertex Int
 
+{- Day 15 - It's just astar
+
+We're looking for the optimal path from (0, 0) to (n, m) on the grid,
+which is literally just A* search.
+
+taxi-cab distance from the end is a good heuristic to use, as it is
+admissable (it never overestimates the actual cost to reach the end).
+For admissable heuristic functions, A* will give us an optimal path.
+
+For part 2, Since the cost of a cell is a function of which cell it
+is in the 5x5 monster-grid, we only need to keep track of the first
+cell (the puzzle input) and define a map accordingly.
+
+TODO: Don't be a lazy arse; try to implement A* yourself
+
+-}
 
 neighbors :: (Int, Int) -> Vertex -> [Vertex]
 neighbors (numrow, numcol) (r, c) = filter cond candidates
@@ -27,78 +42,59 @@ c2i '8' = 8
 c2i '9' = 9
 c2i _ = undefined
 
-{- Day 15 - It's just astar
-
-We're looking for the optimal path from (0, 0) to (n, m) on the grid,
-which is literally just A* search.
-
-We can use a heuristic function h((r, c)) = (height - r) + (width - c),
-which is just the taxi-cab distance from the current point to the end.
-Because we can't possible overestimate the cost at a node (we can't be
-more direct and cheaper than a taxicab path of all 1's), h is admissable,
-so we are guaranteed to find the optimal path.
-
--}
-
-parse :: String -> Edges
-parse s = foldr step M.empty (zip [0..] concatd)
+parse :: String -> ((Int, Int), Costs)
+parse s = ((height, width), foldr step M.empty (zip [0..] concatd))
     where
         ls = lines s
         width = length . head $ ls
         height = length ls
         concatd = concat ls
-        step (i, cost) m = let 
+        step (i, cost) costs = let 
                         cell' = (i `div` width, i `mod` width)
-                        ns = neighbors (height, width) cell'
-                        in M.union (M.fromList $ map (\n -> ((n, cell'), c2i cost)) ns) m
+                        in M.insert cell' (c2i cost) costs
 
-data QE = QE Vertex Int
-
-instance Eq QE where
-    (==) (QE _ i) (QE _ j) = i == j
-
-instance Ord QE where
-    (<=) (QE _ i) (QE _ j) = i <= j
-
-rebuild :: M.Map Vertex Vertex -> Vertex -> [Vertex]
-rebuild vs = unfoldr step
-    where
-        step v | v == (0, 0) = Nothing
-               | otherwise = M.lookup v vs >>= (\v' -> Just (v', v'))
+adj :: (Int, Int) -> Vertex -> HS.HashSet Vertex
+adj bounds = HS.fromList . neighbors bounds
 
 h :: (Int, Int) -> Vertex -> Int
 h (nr, nc) (r, c) = nr - r + nc - c - 2
 
-search :: (Int, Int) -> Edges -> [Vertex]
-search bounds = _search 
-    bounds
-    M.empty
-    (M.singleton (0, 0) 0)
-    (M.singleton (0, 0) h')
-    (PQ.singleton $ QE (0, 0) h')
-    where
-        h' = h bounds (0, 0)
+totalRisk :: Costs -> [Vertex] -> Int
+totalRisk cs = sum . mapMaybe (`M.lookup` cs)
 
-inf = 1 / 0
-
-_search :: (Int, Int) -> M.Map Vertex Vertex -> M.Map Vertex Int -> M.Map Vertex Int -> PQ.MinQueue QE -> Edges -> [Vertex]
-_search bounds cameFrom gScore fScore pq es = let
-    (QE current _, pq') = PQ.deleteFindMin pq
-    step v' (cf', gs', fs', pq') = let
-        tentativeGScore = fromJust (M.lookup (current, v') es) + d current v'
-        in if tentativeGScore < fromMaybe inf (M.lookup v' gs')
-    in if current == bounds 
-       then rebuild cameFrom current 
-       else let
-           (cameFrom', gScore', fScore', pq'') = foldr step (cameFrom, gScore, fScore, pq') (neighbors bounds current)
-            in _search bounds cameFrom' gScore' fScore' pq'' es
-       where
-           d v1 v2 = fromJust $ M.lookup (v1, v2) es
+totalRisk2 :: (Int, Int) -> Costs -> [Vertex] -> Int
+totalRisk2 (nr, nc) cs = let 
+    cl (r, c) = let c' = (r `div` nr) + (c `div` nc) + fromJust (M.lookup (r `mod` nr, c `mod` nc) cs)
+                in if c' > 9 then c' - 9 else c'
+    in sum . map cl
 
 
+part1Search :: (Int, Int) -> M.Map Vertex Int -> [Vertex]
+part1Search bounds@(nr, nc) costs = fromJust $ aStar 
+        (adj bounds) 
+        (\_ v -> fromJust $ M.lookup v costs)
+        (h bounds)
+        (==(nr - 1, nc - 1))
+        (0, 0)
 
+part2Search :: (Int, Int) -> M.Map Vertex Int -> [Vertex]
+part2Search bounds@(nr, nc) costs = let
+    nr' = nr * 5
+    nc' = nc * 5
+    bounds' = (nr', nc')
+    cl _ (r, c) = let cost = (r `div` nr) + (c `div` nc) + fromJust (M.lookup (r `mod` nr, c `mod` nc) costs)
+                  in if cost > 9 then cost - 9 else cost
+
+    in fromJust $ aStar
+        (adj bounds')
+        cl
+        (h bounds')
+        (==(nr' - 1, nc' - 1))
+        (0, 0)
 
 main = do
     contents <- getArgs >>= readFile . head
 
-    print $ parse contents
+    let (bounds, costs) = parse contents
+
+    print $ totalRisk2 bounds costs $ part2Search bounds costs
