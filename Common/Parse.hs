@@ -2,6 +2,9 @@ module Common.Parse where
 
 import Control.Monad.Trans.State ( state, State )
 
+takeN :: Int -> State String String
+takeN n = state $ splitAt n
+
 trimN :: Int -> State String () 
 trimN n = state $ \s -> ((), drop n s)
 
