@@ -49,8 +49,13 @@ list is empty or one of the unfixed scanners can't be aligned.
 Runtime as of commit is ~3:30 for my puzzle input.
 -}
 
+-- A space is a collection of points scanned by a scanner
 type Space = S.Set Pt
+
+-- A vector represents a translation in 3 dimensions.
 type Vec = (Int, Int, Int)
+
+-- A point is a 3D coordinate on some reference axis.
 type Pt = (Int, Int, Int)
 
 -- Parse
@@ -82,6 +87,7 @@ parse :: String -> [Space]
 parse = evalState parseScanners . lines
 
 -------------------------------------------------------
+-- Vector operations
 
 diff :: Pt -> Pt -> Vec
 (x, y, z) `diff` (x', y', z') = (x - x', y - y', z - z')
@@ -92,25 +98,12 @@ translate (dx, dy, dz) (x, y, z) = (x + dx, y + dy, z + dz)
 neg :: Vec -> Vec
 neg (x, y, z) = (-x, -y, -z)
 
+-- aka manhattan norm
 taxicab :: Vec -> Int
 taxicab (x, y, z) = abs x + abs y + abs z
 
-safeHead :: [a] -> Maybe a
-safeHead [] = Nothing
-safeHead (a : as) = Just a
-
--- Determine a vector which translates at least 12 points from
--- the first space to the second space.
-getTranslationVec :: Space -> Space -> Maybe Vec
-getTranslationVec s1 s2 = let
-    vecs = S.map (uncurry diff) (S.cartesianProduct s2 s1) 
-    in safeHead $ S.toList (S.filter (\v -> numAlign v s1 s2 >= 12) vecs)
-    where
-        numAlign v s1 s2 = let
-            s1' = S.map (translate v) s1
-            in S.size (S.intersection s1' s2)
-
--- ############## Rotation
+------------------------------------------------------
+--  Rotation
 
 type Rotation = Pt -> Pt
 transforms :: [Rotation]
@@ -147,6 +140,26 @@ transforms = [
     \(x, y, z) -> (y, -z, -x)
  ]
 
+------------------------------------------------------
+--  Alignment
+
+safeHead :: [a] -> Maybe a
+safeHead [] = Nothing
+safeHead (a : as) = Just a
+
+-- Determine a vector which translates at least 12 points from
+-- the first space to the second space.
+getTranslationVec :: Space -> Space -> Maybe Vec
+getTranslationVec s1 s2 = let
+    vecs = S.map (uncurry diff) (S.cartesianProduct s2 s1) 
+    in safeHead $ S.toList (S.filter (\v -> numAlign v s1 s2 >= 12) vecs)
+    where
+        numAlign v s1 s2 = let
+            s1' = S.map (translate v) s1
+            in S.size (S.intersection s1' s2)
+
+-- Determine a rotation and translation which will transform
+-- s2 so it shares the same reference axis of s1.
 align :: Space -> Space -> Maybe (Rotation, Vec)
 align s1 s2 = safeHead $ mapMaybe findAfterRotate transforms
     where
