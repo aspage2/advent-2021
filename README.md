@@ -1,3 +1,6 @@
+# Archived
+**This project has been moved here: https://github.com/aspage2/advent-of-code**
+
 # Advent of Code 2021
 
 https://adventofcode.com/
